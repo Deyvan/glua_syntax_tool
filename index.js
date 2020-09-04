@@ -40,7 +40,7 @@ function remove_comments(){
                 index++
             }
             
-        }else if(char1 == "["){
+        }else if(char1 == "[" && (char2 == "[" || char2 == "=")){
             index++
             var sep_count = 0
 
@@ -67,7 +67,6 @@ function remove_comments(){
             index++
             var char = source[index]
 
-            index++
             if(char == "/"){
                 while(true){
                     if(source[index] == "\n" || index >= source.length){break}
@@ -84,7 +83,6 @@ function remove_comments(){
             index += 2
             var char = source[index]
 
-            index++
             if(char == "["){
 
                 var sep_count = 0
