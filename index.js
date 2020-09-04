@@ -19,7 +19,51 @@ function remove_comments(){
         var char1 = source[index]
         var char2 = source[index+1]
 
-        if(char1 == "/"){
+        if(char1 == "\"" || char1 == "\'"){ //скипануть стринги чтобы небыло такого что в стринге что-то похожее на комент был удалён
+            newsource += source[index]
+            index++
+            var end = char1
+
+            while(true){
+                var char1 = source[index]
+                var char2 = source[index+1]
+                if(char1=="\\" && char2 == end){
+                    index += 1
+                    newsource += char1 + char2
+                }else if(char1 == end){
+                    index++
+                    newsource += end
+                    break
+                }else{
+                    newsource += source[index]
+                }
+                index++
+            }
+            
+        }else if(char1 == "["){
+            index++
+            var sep_count = 0
+
+            while(true){
+                var char = source[index]
+                if(char!="="){index++; break}
+                index++
+                sep_count++
+            }
+
+            newsource += "[" + "=".repeat(sep_count) + "["
+
+            var end = "]" + "=".repeat(sep_count) + "]"
+
+            while(true){
+                if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
+                newsource += source[index]
+                index++
+            }
+
+            newsource += end
+
+        }else if(char1 == "/"){ // ну и дальше разное гавно
             index++
             var char = source[index]
 
@@ -31,7 +75,7 @@ function remove_comments(){
                 }
             }else if(char == "*"){
                 while(true){
-                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){index+=2;break}
+                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){index+=2; break}
                     index++
                 }
             }
@@ -55,7 +99,7 @@ function remove_comments(){
                 var end = "]" + "=".repeat(sep_count) + "]"
 
                 while(true){
-                    if(source.substr(index, end.length) == end){index += end.length; break}
+                    if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
                     index++
                 }
 
