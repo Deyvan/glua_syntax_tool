@@ -25,14 +25,13 @@ function remove_comments(){
 
             index++
             if(char == "/"){
-    
                 while(true){
                     if(source[index] == "\n" || index >= source.length){break}
                     index++
                 }
             }else if(char == "*"){
                 while(true){
-                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){break}
+                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){index+=2;break}
                     index++
                 }
             }
