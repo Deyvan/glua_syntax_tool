@@ -37,11 +37,11 @@
                 display: inline-block;
                 text-decoration: none;
                 cursor: pointer;
-                }
+            }
 
         </style>
     </head>
-    <body onload="load()">
+    <body onload="load()" onresize="resize_editor()">
         <div id="left_panel">
             <button id="gaybutton" onclick="rename_variables()">Rename variables</button>
             <button id="gaybutton" onclick="remove_comments()">Remove comments</button>

@@ -1,5 +1,9 @@
+function resize_editor(){
+    document.getElementById("editor").style.width = window.innerWidth - 200 + "px"
+}
+
 function load(){
-    console.log(123)
+    resize_editor()
 }
 
 function rename_variables(){
@@ -116,4 +120,6 @@ function remove_comments(){
     }
 
     editor.setValue(newsource)
+    editor.focus()
+    editor.scrollToLine(0)
 }
