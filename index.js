@@ -91,6 +91,7 @@ function remove_comments(){
 
                 var sep_count = 0
 
+                index++
                 while(true){
                     var char = source[index]
                     if(char!="="){index++; break}
