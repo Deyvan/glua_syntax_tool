@@ -1,6 +1,93 @@
+
+const blacklisted_chars = { //пиздабольские символы которые нириально ебут редакторы
+    ["\u{202E}"]: true,
+    ["\u{202D}"]: true,
+}
+
 function resize_editor(){
     document.getElementById("editor").style.width = window.innerWidth - 200 + "px"
 }
+
+function setvalue_and_focus(aue){
+    editor.setValue(aue)
+    editor.focus()
+    editor.scrollToLine(0)
+}
+
+function charToHex(num){
+    var out = num.toString(16)
+    if(out.length==1) out = "0" + out
+    return out
+}
+
+function parseString(code, code_index){ // лол кек
+    var end = code[code_index]
+    var index = code_index+1
+    var out = []
+
+    while(true){
+        if(code.length <= index){break}
+        var char = code[index]
+        
+        if(char == 92){ // if char == \
+            index++
+            char = code[index]
+
+            switch(char){
+                case 97: //  \a
+                    out.push(7);  index++; break
+                case 98: //  \b
+                    out.push(8);  index++; break
+                case 102: // \f
+                    out.push(12); index++; break
+                case 110: // \n
+                    out.push(10); index++; break
+                case 114: // \r
+                    out.push(13); index++; break
+                case 116: // \t
+                    out.push(9);  index++; break
+                case 118: // \v
+                    out.push(11); index++; break
+                case 92: //  \\
+                    out.push(92); index++; break
+                case 34: // \"
+                    out.push(34); index++; break
+                case 39: //  \'
+                    out.push(39); index++; break
+                case 120: // \xXX
+                    index++; out.push(parseInt(String.fromCharCode(code[index])+String.fromCharCode(code[index+1]), 16)); index += 2; break
+            }
+
+            if(48 <= char && 57 >= char){ // \NNN
+                index++
+                var byte = char-48
+
+                if(48 <= code[index] && 57 >= code[index]){
+                    byte = byte * 10 + (code[index]-48)
+                    index++
+                }
+
+                if(48 <= code[index] && 57 >= code[index]){
+                    byte = byte * 10 + (code[index]-48)
+                    index++
+                }
+
+                out.push(byte)
+            }
+        }else if(char == end){
+            index++
+            break
+        }else{
+            out.push(code[index])
+            index++
+        }
+        
+    }
+
+    return [out, index]
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function load(){
     resize_editor()
@@ -10,6 +97,13 @@ function rename_variables(){
 }
 
 function strings_to_hex(){
+    var source = editor.getValue()
+    var newsource = ""
+    var index = 0
+
+    parseString(new TextEncoder("utf8").encode(source), index)
+
+    setvalue_and_focus(newsource)
 }
 
 function remove_comments(){
@@ -120,7 +214,5 @@ function remove_comments(){
 
     }
 
-    editor.setValue(newsource)
-    editor.focus()
-    editor.scrollToLine(0)
+    setvalue_and_focus(newsource)
 }
