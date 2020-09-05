@@ -1,5 +1,4 @@
-
-const blacklisted_chars = { //пиздабольские символы которые нириально ебут редакторы
+const blacklisted_chars = {
     ["\u{202E}"]: true,
     ["\u{202D}"]: true,
 }
@@ -20,9 +19,34 @@ function charToHex(num){
     return out
 }
 
-function parseString(code, code_index){ // лол кек
-    var end = code[code_index]
-    var index = code_index+1
+function calculateStringSize(code){
+    var end = code[0]
+    var index = 1
+    var out = 0
+
+    while(true){
+        if(code.length <= index){break}
+
+        if(code[index] == "\\" && code[index+1] == end){
+            index += 2
+            out += 2
+            continue
+        }
+
+        if(code[index] == end){
+            break
+        }
+
+        index++
+        out++
+    }
+
+    return out
+}
+
+function parseString(code){
+    var end = code[0]
+    var index = 1
     var out = []
 
     while(true){
@@ -84,6 +108,31 @@ function parseString(code, code_index){ // лол кек
         
     }
 
+    return out
+}
+
+function parseMultiLineString(code){
+    var sep_count = 0
+    var index = 0
+    var out = ""
+
+    index++
+
+    while(true){
+        var char = code[index]
+        if(char!="="){index++; break}
+        index++
+        sep_count++
+    }
+
+    var end = "]" + "=".repeat(sep_count) + "]"
+
+    while(true){
+        if(code.substr(index, end.length) == end || index >= code.length){index += end.length; break}
+        out += code[index]
+        index++
+    }
+
     return [out, index]
 }
 
@@ -101,7 +150,94 @@ function strings_to_hex(){
     var newsource = ""
     var index = 0
 
-    parseString(new TextEncoder("utf8").encode(source), index)
+    while(true){
+        if(index >= source.length){break}
+
+        var char1 = source[index]
+        var char2 = source[index+1]
+
+        if(char1 == "\"" || char1 == "\'"){
+            newsource += char1
+            var out = parseString(new TextEncoder("utf8").encode(source.substr(index)))
+
+            out.forEach(function(char){
+                newsource += "\\x" + charToHex(char)
+            })
+
+            newsource += char1
+            index += calculateStringSize(source.substr(index)) + 2
+        }else if(char1 == "[" && (char2 == "[" || char2 == "=")){
+            console.log(123213892138921389)
+            newsource += "\""
+            var [out, length] = parseMultiLineString(source.substr(index))
+
+            new TextEncoder("utf8").encode(out).forEach(function(char){
+                newsource += "\\x" + charToHex(char)
+            })
+
+            newsource += "\""
+            index += length
+        }else if(char1 == "/"){
+            index++
+            var char = source[index]
+            newsource += char1
+
+            if(char == "/"){
+                while(true){
+                    if(source[index] == "\n" || index >= source.length){; break}
+                    newsource += source[index]
+                    index++
+                }
+            }else if(char == "*"){
+                while(true){
+                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){newsource += "*/"; index+=2; break}
+                    newsource += source[index]
+                    index++
+                }
+            }
+
+        }else if(char1 == "-" && char2 == "-"){
+            index += 2
+            var char = source[index]
+
+            newsource += "--"
+
+            if(char == "["){
+
+                var sep_count = 0
+
+                index++
+                while(true){
+                    var char = source[index]
+                    if(char!="="){index++; break}
+                    index++
+                    sep_count++
+                }
+
+                newsource += "[" + "=".repeat(sep_count) + "["
+                var end = "]" + "=".repeat(sep_count) + "]"
+
+                while(true){
+                    if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
+                    newsource += source[index]
+                    index++
+                }
+
+                newsource += end
+
+            }else{
+                while(true){
+                    if(source[index] == "\n" || index >= source.length){break}
+                    newsource += source[index]
+                    index++
+                }
+            }
+
+        }else{
+            newsource += source[index]
+            index++
+        }
+    }
 
     setvalue_and_focus(newsource)
 }
