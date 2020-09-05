@@ -1,8 +1,3 @@
-const blacklisted_chars = {
-    ["\u{202E}"]: true,
-    ["\u{202D}"]: true,
-}
-
 function resize_editor(){
     document.getElementById("editor").style.width = window.innerWidth - 200 + "px"
 }
@@ -136,6 +131,45 @@ function parseMultiLineString(code){
     return [out, index]
 }
 
+function normalizeString(str){
+    var out = []
+    var index = 0
+
+    while(true){
+        if(str.length <= index){break}
+        
+        var char = str[index]
+
+        if(char == 0){
+            out.push(92) // \
+            out.push(48) // 0
+            index++
+        }else if(char == 10){
+            out.push(92) // \
+            out.push(110) // n
+            index++
+        }else if(char == 92){
+            out.push(92) // \
+            out.push(92) // \
+            index++
+        }else if(char == 34){
+            out.push(92) // \
+            out.push(34) // "
+            index++
+        }else if(char == 39){
+            out.push(92) // \
+            out.push(39) // '
+            index++
+        }else{
+            out.push(char)
+        }
+
+        index++
+    }
+
+    return out
+}
+
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 function load(){
@@ -143,6 +177,98 @@ function load(){
 }
 
 function rename_variables(){
+}
+
+function normalize_strings(){
+    var source = editor.getValue()
+    var newsource = ""
+    var index = 0
+
+    while(true){
+        if(index >= source.length){break}
+
+        var char1 = source[index]
+        var char2 = source[index+1]
+
+        if(char1 == "\"" || char1 == "\'"){
+            newsource += char1
+            var out = parseString(new TextEncoder("utf8").encode(source.substr(index)))
+
+            newsource += new TextDecoder("utf8").decode(new Uint8Array(normalizeString(out)))
+
+            newsource += char1
+            index += calculateStringSize(source.substr(index)) + 2
+        }else if(char1 == "[" && (char2 == "[" || char2 == "=")){
+            newsource += "\""
+            var [out, length] = parseMultiLineString(source.substr(index))
+
+            newsource += new TextDecoder("utf8").decode(normalizeString(out))
+
+            newsource += "\""
+            index += length
+        }else if(char1 == "/"){
+            index++
+            var char = source[index]
+            newsource += char1
+
+            if(char == "/"){
+                while(true){
+                    if(source[index] == "\n" || index >= source.length){; break}
+                    newsource += source[index]
+                    index++
+                }
+            }else if(char == "*"){
+                while(true){
+                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){newsource += "*/"; index+=2; break}
+                    newsource += source[index]
+                    index++
+                }
+            }
+
+        }else if(char1 == "-" && char2 == "-"){
+            index += 2
+            var char = source[index]
+
+            newsource += "--"
+
+            if(char == "["){
+
+                var sep_count = 0
+
+                index++
+                while(true){
+                    var char = source[index]
+                    if(char!="="){index++; break}
+                    index++
+                    sep_count++
+                }
+
+                newsource += "[" + "=".repeat(sep_count) + "["
+                var end = "]" + "=".repeat(sep_count) + "]"
+
+                while(true){
+                    if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
+                    newsource += source[index]
+                    index++
+                }
+
+                newsource += end
+
+            }else{
+                while(true){
+                    if(source[index] == "\n" || index >= source.length){break}
+                    newsource += source[index]
+                    index++
+                }
+            }
+
+        }else{
+            newsource += source[index]
+            index++
+        }
+    }
+
+    setvalue_and_focus(newsource)
 }
 
 function strings_to_hex(){
@@ -167,7 +293,6 @@ function strings_to_hex(){
             newsource += char1
             index += calculateStringSize(source.substr(index)) + 2
         }else if(char1 == "[" && (char2 == "[" || char2 == "=")){
-            console.log(123213892138921389)
             newsource += "\""
             var [out, length] = parseMultiLineString(source.substr(index))
 
