@@ -143,23 +143,18 @@ function normalizeString(str){
         if(char == 0){
             out.push(92) // \
             out.push(48) // 0
-            index++
         }else if(char == 10){
             out.push(92) // \
             out.push(110) // n
-            index++
         }else if(char == 92){
             out.push(92) // \
             out.push(92) // \
-            index++
         }else if(char == 34){
             out.push(92) // \
             out.push(34) // "
-            index++
         }else if(char == 39){
             out.push(92) // \
             out.push(39) // '
-            index++
         }else{
             out.push(char)
         }
@@ -425,6 +420,7 @@ function remove_comments(){
         }else if(char1 == "/"){ // ну и дальше разное гавно
             index++
             var char = source[index]
+            var whitespace_left = source[index-2] === " "
 
             if(char == "/"){
                 while(true){
@@ -433,7 +429,12 @@ function remove_comments(){
                 }
             }else if(char == "*"){
                 while(true){
-                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){index+=2; break}
+                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){
+                        index+=2
+                        if(!(source[index] === " " || whitespace_left))
+                            newsource += " "
+                        break
+                    }
                     index++
                 }
             }
@@ -445,6 +446,7 @@ function remove_comments(){
             if(char == "["){
 
                 var sep_count = 0
+                var whitespace_left = source[index-3] === " "
 
                 index++
                 while(true){
@@ -457,7 +459,12 @@ function remove_comments(){
                 var end = "]" + "=".repeat(sep_count) + "]"
 
                 while(true){
-                    if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
+                    if(source.substr(index, end.length) == end || index >= source.length){
+                        index += end.length
+                        if(!(source[index] === " " || whitespace_left))
+                            newsource += " "
+                        break
+                    }
                     index++
                 }
 
