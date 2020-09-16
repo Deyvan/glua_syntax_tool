@@ -56,6 +56,12 @@ let parse_string = (input) => { // возращает Array utf8
 
             while(index < input.length){
 
+                if(input[index] == "\\" && input[index+1] == "\\"){
+                    index += 2
+                    out += 2
+                    continue
+                }
+
                 if(input[index] == "\\" && input[index+1] == end){
                     index += 2
                     out += 2
