@@ -49,7 +49,7 @@ function loaded(){
             document.body.removeChild(element);
 
             return false
-        }else if(event.ctrlKey && event.key === "x"){
+        }else if(event.altKey && event.key === "z"){
             editor.getSession().setUseWrapMode(!editor.getSession().getUseWrapMode())
 
             return false
