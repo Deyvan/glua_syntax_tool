@@ -1,3 +1,21 @@
+let OnClickButton
+let lua_parser
+let lua_str_utils
+
+let normalize_strings
+let strings_to_hex
+
+function loaded(){
+
+    OnClickButton("normalize_strings", () => {normalize_strings(); editor.focus()})
+    OnClickButton("strings_to_hex", () => {strings_to_hex(); editor.focus()})
+
+}
+
+OnClickButton = (id, func) => {
+    document.getElementById(id).onclick = func
+}
+
 function resize_editor(){
     document.getElementById("editor").style.width = window.innerWidth - 200 + "px"
 }
@@ -8,479 +26,129 @@ function setvalue_and_focus(aue){
     editor.scrollToLine(0)
 }
 
-function charToHex(num){
-    var out = num.toString(16)
-    if(out.length==1) out = "0" + out
-    return out
+/////////////////////////////////////////////// load
+
+let count_modules = 3
+let loaded_modules = 0
+
+let loadedChanged = () => {
+    document.getElementById("loadscreenBar").style.width = Math.floor(loaded_modules / count_modules * 100) + "%"
+    if(loaded_modules === count_modules){
+        document.getElementById("loadscreenBar").remove()
+        document.getElementById("loadscreen").remove()
+        editor.focus()
+        loaded()
+    }
 }
 
-function calculateStringSize(code){
-    var end = code[0]
-    var index = 1
-    var out = 0
+document.getElementById("body").onload = () => {
+    loaded_modules++
+    loadedChanged()
+    import("./js/lua_parser.js").then((exports) => {lua_parser = exports.parser; loaded_modules++; loadedChanged()})
+    import("./js/lua_string_utils.js").then((exports) => {lua_str_utils = exports; loaded_modules++; loadedChanged()})
 
-    while(true){
-        if(code.length <= index){break}
+    resize_editor()
+    document.getElementById("body").onresize = resize_editor
+}
 
-        if(code[index] == "\\" && code[index+1] == end){
-            index += 2
-            out += 2
+/////////////////////////////////////////////// funcs
+
+let is_comment = (code, offset) =>
+    (code[offset] === "/" && code[offset+1] === "*") ||
+    (code[offset] === "-" && code[offset+1] === "-")
+
+let skip_comment = (code, offset) => {
+    if(code[offset] === "/" && code[offset+1] === "*"){
+        while(offset < code.length && !(code[offset] === "*" && code[offset+1] === "/")) offset++
+        offset += 2 // */
+        return offset
+    }else{
+        offset += 2 // --
+        if(code.substr(offset).match(/^\[=*\[/)){
+            let suffix = code.substr(offset).match(/^\[=*\[/)[0].replace("[", "]").replace("[", "]")
+            offset += suffix.length // prefix
+            while(offset < code.length && !(code.substr(offset, suffix.length) === suffix)) offset++
+            offset += suffix.length // suffix
+            return offset
+        }else{
+            while(offset < code.length && !(code[offset] === "\n")) offset++
+            offset++ // \n
+            return offset
+        }
+    }
+}
+
+let parse_string=e=>{let r=e.substr(0,2);if('"'!==r[0]&&"'"!==r[0]&&("["!==r[0]||"["!==r[1]&&"="!=r[1]))return[!1,0];let s=[],a=0;if('"'===r[0]||"'"===r[0]){let r=new TextEncoder("utf8").encode(e),h=r.length,u=1;{let r=e[0],s=1,t=0;for(;s<e.length;)if("\\"!=e[s]||e[s+1]!=r){if(e[s]==r)break;s++,t++}else s+=2,t+=2;a=t+2}for(;u<h;){let e=r[u];if(92==e){switch(e=r[++u]){case 97:s.push(7),u++;break;case 98:s.push(8),u++;break;case 102:s.push(12),u++;break;case 110:s.push(10),u++;break;case 114:s.push(13),u++;break;case 116:s.push(9),u++;break;case 118:s.push(11),u++;break;case 92:s.push(92),u++;break;case 34:s.push(34),u++;break;case 39:s.push(39),u++;break;case 120:u++,s.push(parseInt(String.fromCharCode(r[u])+String.fromCharCode(r[u+1]),16)),u+=2}if(48<=e&&57>=e){var t=e-48;48<=r[++u]&&57>=r[u]&&(t=10*t+(r[u]-48),u++),48<=r[u]&&57>=r[u]&&(t=10*t+(r[u]-48),u++),s.push(t)}}else{if(e==r[0]){u++;break}s.push(r[u]),u++}}}else{if("["!==r[0]||"["!==r[1]&&"="!=r[1])return[!1,0];{let r=e.length,t=1,h="",u=0;for(;"="===e[t];)t++,u++;t++;let n="]"+"=".repeat(u)+"]";for(a+=2*n.length;t<r&&e.substr(t,n.length)!==n;)h+=e[t],a++,t++;s=new TextEncoder("utf8").encode(h)}}return[s,a]};
+
+normalize_strings = () => {
+    let code = editor.getValue()
+    let newcode = ""
+
+    let offset = 0
+
+    while(offset < code.length){
+
+        if(is_comment(code, offset)){
+            let new_offset = skip_comment(code, offset)
+            newcode += code.substr(offset, new_offset - offset)
+            offset = new_offset
             continue
         }
 
-        if(code[index] == end){
-            break
+        let [str, len] = parse_string(code.substr(offset))
+        console.log(str)
+        offset += len
+
+        if(str !== false){
+            newcode += "\""
+
+            newcode += new TextDecoder("utf8").decode(
+                new Uint8Array(lua_str_utils.normalize(str))
+            )
+
+            newcode += "\""
+            continue
         }
 
-        index++
-        out++
+        newcode += code[offset]
+        offset++
     }
 
-    return out
+    editor.setValue(newcode)
 }
 
-function parseString(code){
-    var end = code[0]
-    var index = 1
-    var out = []
+strings_to_hex = () => {
+    let code = editor.getValue()
+    let newcode = ""
 
-    while(true){
-        if(code.length <= index){break}
-        var char = code[index]
-        
-        if(char == 92){ // if char == \
-            index++
-            char = code[index]
+    let offset = 0
 
-            switch(char){
-                case 97: //  \a
-                    out.push(7);  index++; break
-                case 98: //  \b
-                    out.push(8);  index++; break
-                case 102: // \f
-                    out.push(12); index++; break
-                case 110: // \n
-                    out.push(10); index++; break
-                case 114: // \r
-                    out.push(13); index++; break
-                case 116: // \t
-                    out.push(9);  index++; break
-                case 118: // \v
-                    out.push(11); index++; break
-                case 92: //  \\
-                    out.push(92); index++; break
-                case 34: // \"
-                    out.push(34); index++; break
-                case 39: //  \'
-                    out.push(39); index++; break
-                case 120: // \xXX
-                    index++; out.push(parseInt(String.fromCharCode(code[index])+String.fromCharCode(code[index+1]), 16)); index += 2; break
-            }
+    while(offset < code.length){
 
-            if(48 <= char && 57 >= char){ // \NNN
-                index++
-                var byte = char-48
-
-                if(48 <= code[index] && 57 >= code[index]){
-                    byte = byte * 10 + (code[index]-48)
-                    index++
-                }
-
-                if(48 <= code[index] && 57 >= code[index]){
-                    byte = byte * 10 + (code[index]-48)
-                    index++
-                }
-
-                out.push(byte)
-            }
-        }else if(char == end){
-            index++
-            break
-        }else{
-            out.push(code[index])
-            index++
-        }
-        
-    }
-
-    return out
-}
-
-function parseMultiLineString(code){
-    var sep_count = 0
-    var index = 0
-    var out = ""
-
-    index++
-
-    while(true){
-        var char = code[index]
-        if(char!="="){index++; break}
-        index++
-        sep_count++
-    }
-
-    var end = "]" + "=".repeat(sep_count) + "]"
-
-    while(true){
-        if(code.substr(index, end.length) == end || index >= code.length){index += end.length; break}
-        out += code[index]
-        index++
-    }
-
-    return [out, index]
-}
-
-function normalizeString(str){
-    var out = []
-    var index = 0
-
-    while(true){
-        if(str.length <= index){break}
-        
-        var char = str[index]
-
-        if(char == 0){
-            out.push(92) // \
-            out.push(48) // 0
-        }else if(char == 10){
-            out.push(92) // \
-            out.push(110) // n
-        }else if(char == 92){
-            out.push(92) // \
-            out.push(92) // \
-        }else if(char == 34){
-            out.push(92) // \
-            out.push(34) // "
-        }else if(char == 39){
-            out.push(92) // \
-            out.push(39) // '
-        }else{
-            out.push(char)
+        if(is_comment(code, offset)){
+            let new_offset = skip_comment(code, offset)
+            newcode += code.substr(offset, new_offset - offset)
+            offset = new_offset
+            continue
         }
 
-        index++
-    }
+        let [str, len] = parse_string(code.substr(offset))
+        offset += len
 
-    return out
-}
+        if(str !== false){
+            newcode += "\""
 
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+            newcode += new TextDecoder("utf8").decode(
+                new Uint8Array(lua_str_utils.tohex(str))
+            )
 
-function load(){
-    resize_editor()
-}
-
-function rename_variables(){
-}
-
-function normalize_strings(){
-    var source = editor.getValue()
-    var newsource = ""
-    var index = 0
-
-    while(true){
-        if(index >= source.length){break}
-
-        var char1 = source[index]
-        var char2 = source[index+1]
-
-        if(char1 == "\"" || char1 == "\'"){
-            newsource += char1
-            var out = parseString(new TextEncoder("utf8").encode(source.substr(index)))
-
-            newsource += new TextDecoder("utf8").decode(new Uint8Array(normalizeString(out)))
-
-            newsource += char1
-            index += calculateStringSize(source.substr(index)) + 2
-        }else if(char1 == "[" && (char2 == "[" || char2 == "=")){
-            newsource += "\""
-            var [out, length] = parseMultiLineString(source.substr(index))
-
-            newsource += new TextDecoder("utf8").decode(normalizeString(out))
-
-            newsource += "\""
-            index += length
-        }else if(char1 == "/"){
-            index++
-            var char = source[index]
-            newsource += char1
-
-            if(char == "/"){
-                while(true){
-                    if(source[index] == "\n" || index >= source.length){; break}
-                    newsource += source[index]
-                    index++
-                }
-            }else if(char == "*"){
-                while(true){
-                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){newsource += "*/"; index+=2; break}
-                    newsource += source[index]
-                    index++
-                }
-            }
-
-        }else if(char1 == "-" && char2 == "-"){
-            index += 2
-            var char = source[index]
-
-            newsource += "--"
-
-            if(char == "["){
-
-                var sep_count = 0
-
-                index++
-                while(true){
-                    var char = source[index]
-                    if(char!="="){index++; break}
-                    index++
-                    sep_count++
-                }
-
-                newsource += "[" + "=".repeat(sep_count) + "["
-                var end = "]" + "=".repeat(sep_count) + "]"
-
-                while(true){
-                    if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
-                    newsource += source[index]
-                    index++
-                }
-
-                newsource += end
-
-            }else{
-                while(true){
-                    if(source[index] == "\n" || index >= source.length){break}
-                    newsource += source[index]
-                    index++
-                }
-            }
-
-        }else{
-            newsource += source[index]
-            index++
-        }
-    }
-
-    setvalue_and_focus(newsource)
-}
-
-function strings_to_hex(){
-    var source = editor.getValue()
-    var newsource = ""
-    var index = 0
-
-    while(true){
-        if(index >= source.length){break}
-
-        var char1 = source[index]
-        var char2 = source[index+1]
-
-        if(char1 == "\"" || char1 == "\'"){
-            newsource += char1
-            var out = parseString(new TextEncoder("utf8").encode(source.substr(index)))
-
-            out.forEach(function(char){
-                newsource += "\\x" + charToHex(char)
-            })
-
-            newsource += char1
-            index += calculateStringSize(source.substr(index)) + 2
-        }else if(char1 == "[" && (char2 == "[" || char2 == "=")){
-            newsource += "\""
-            var [out, length] = parseMultiLineString(source.substr(index))
-
-            new TextEncoder("utf8").encode(out).forEach(function(char){
-                newsource += "\\x" + charToHex(char)
-            })
-
-            newsource += "\""
-            index += length
-        }else if(char1 == "/"){
-            index++
-            var char = source[index]
-            newsource += char1
-
-            if(char == "/"){
-                while(true){
-                    if(source[index] == "\n" || index >= source.length){; break}
-                    newsource += source[index]
-                    index++
-                }
-            }else if(char == "*"){
-                while(true){
-                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){newsource += "*/"; index+=2; break}
-                    newsource += source[index]
-                    index++
-                }
-            }
-
-        }else if(char1 == "-" && char2 == "-"){
-            index += 2
-            var char = source[index]
-
-            newsource += "--"
-
-            if(char == "["){
-
-                var sep_count = 0
-
-                index++
-                while(true){
-                    var char = source[index]
-                    if(char!="="){index++; break}
-                    index++
-                    sep_count++
-                }
-
-                newsource += "[" + "=".repeat(sep_count) + "["
-                var end = "]" + "=".repeat(sep_count) + "]"
-
-                while(true){
-                    if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
-                    newsource += source[index]
-                    index++
-                }
-
-                newsource += end
-
-            }else{
-                while(true){
-                    if(source[index] == "\n" || index >= source.length){break}
-                    newsource += source[index]
-                    index++
-                }
-            }
-
-        }else{
-            newsource += source[index]
-            index++
-        }
-    }
-
-    setvalue_and_focus(newsource)
-}
-
-function remove_comments(){
-    var source = editor.getValue()
-    var newsource = ""
-    var index = 0
-
-    while(true){
-        if(index >= source.length){break}
-
-        var char1 = source[index]
-        var char2 = source[index+1]
-
-        if(char1 == "\"" || char1 == "\'"){ //скипануть стринги чтобы небыло такого что в стринге что-то похожее на комент был удалён
-            newsource += source[index]
-            index++
-            var end = char1
-
-            while(true){
-                var char1 = source[index]
-                var char2 = source[index+1]
-                if(char1=="\\" && char2 == end){
-                    index += 1
-                    newsource += char1 + char2
-                }else if(char1 == end){
-                    index++
-                    newsource += end
-                    break
-                }else{
-                    newsource += source[index]
-                }
-                index++
-            }
-            
-        }else if(char1 == "[" && (char2 == "[" || char2 == "=")){
-            index++
-            var sep_count = 0
-
-            while(true){
-                var char = source[index]
-                if(char!="="){index++; break}
-                index++
-                sep_count++
-            }
-
-            newsource += "[" + "=".repeat(sep_count) + "["
-
-            var end = "]" + "=".repeat(sep_count) + "]"
-
-            while(true){
-                if(source.substr(index, end.length) == end || index >= source.length){index += end.length; break}
-                newsource += source[index]
-                index++
-            }
-
-            newsource += end
-
-        }else if(char1 == "/"){ // ну и дальше разное гавно
-            index++
-            var char = source[index]
-            var whitespace_left = source[index-2] === " "
-
-            if(char == "/"){
-                while(true){
-                    if(source[index] == "\n" || index >= source.length){break}
-                    index++
-                }
-            }else if(char == "*"){
-                while(true){
-                    if((source[index] == "*" && source[index+1]=="/") || index >= source.length){
-                        index+=2
-                        if(!(source[index] === " " || whitespace_left))
-                            newsource += " "
-                        break
-                    }
-                    index++
-                }
-            }
-
-        }else if(char1 == "-" && char2 == "-"){
-            index += 2
-            var char = source[index]
-
-            if(char == "["){
-
-                var sep_count = 0
-                var whitespace_left = source[index-3] === " "
-
-                index++
-                while(true){
-                    var char = source[index]
-                    if(char!="="){index++; break}
-                    index++
-                    sep_count++
-                }
-
-                var end = "]" + "=".repeat(sep_count) + "]"
-
-                while(true){
-                    if(source.substr(index, end.length) == end || index >= source.length){
-                        index += end.length
-                        if(!(source[index] === " " || whitespace_left))
-                            newsource += " "
-                        break
-                    }
-                    index++
-                }
-
-            }else{
-                while(true){
-                    if(source[index] == "\n" || index >= source.length){break}
-                    index++
-                }
-            }
-
-        }else{
-            newsource += source[index]
-            index++
+            newcode += "\""
+            continue
         }
 
+        newcode += code[offset]
+        offset++
     }
 
-    setvalue_and_focus(newsource)
+    editor.setValue(newcode)
 }

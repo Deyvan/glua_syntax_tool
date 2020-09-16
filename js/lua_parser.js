@@ -190,7 +190,7 @@ let parse_whitespace = (input) => { // дадада
 }
 
 let parse_special = (input) => {
-    for(key in spec_ops){
+    for(let key in spec_ops){
         if(input.substr(0, key.length) == key){
             return [key, key.length]
         }
@@ -688,8 +688,6 @@ let parse_stat = (tokenizer) => {
 
     let data = tokenizer.next_is("<word>")
 
-    console.log(data)
-
     if(data === "return"){
         tokenizer.next()
         let explist = parse_explist(tokenizer)
@@ -725,6 +723,7 @@ let parse_stat = (tokenizer) => {
             let explist = parse_explist(tokenizer)
             tokenizer.next()
             let block = parse_block(tokenizer)
+            tokenizer.next()
             return ["<for in>", namelist, explist, block]
         }else{
             let name = tokenizer.next()[1]
@@ -877,12 +876,7 @@ parse_block = (tokenizer) => {
     return ["<block>", out]
 }
 
-let parse = (code) => {
-    let tokenizer = new lua_tokenizer(code)
-    return parse_block(tokenizer)[1]
-}
-
-export function parse(code){
+export function parser(code){
     let tokenizer = new lua_tokenizer(code)
     return parse_block(tokenizer)[1]
 }

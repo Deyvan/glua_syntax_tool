@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<meta charset="utf-8">
+
+<html>
     <head>
         <title>GLua syntax tool</title>
-        <script src="index.js" type="text/javascript"></script>
         <style type="text/css">
 
             #editor {
@@ -23,7 +24,37 @@
                 background: rgb(20, 20, 20);
             }
 
-            #gaybutton {
+            #loadscreen {
+                margin: 0px;
+                position: fixed;
+
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+
+                height: 100%;
+                width: 100%;
+
+                background: rgba(0, 0, 0, 0.7);
+            }
+
+            #loadscreenBar {
+                margin: 0px;
+                position: fixed;
+
+                top: 0px;
+                bottom: 0px;
+                left: 0px;
+                right: 0px;
+
+                height: 2px;
+                width: 0%;
+
+                background: rgb(0, 255, 255);
+            }
+
+            .button {
                 background-color: #303030;
                 border: none;
                 color: white;
@@ -41,14 +72,16 @@
 
         </style>
     </head>
-    <body onload="load()" onresize="resize_editor()">
+    <body id="body">
+
         <div id="left_panel">
-            <button id="gaybutton" onclick="rename_variables()">Rename variables</button>
-            <button id="gaybutton" onclick="remove_comments()">Remove comments</button>
-            <button id="gaybutton" onclick="strings_to_hex()">Strings to hex</button>
-            <button id="gaybutton" onclick="normalize_strings()">Normalize strings</button>
+            <button class="button">Rename variables</button>
+            <button class="button">Remove comments</button>
+            <button class="button" id="strings_to_hex">Strings to hex</button>
+            <button class="button" id="normalize_strings">Normalize strings</button>
         </div>
         <div id="editor"></div>
+
         <script src="editor/ace.js" type="text/javascript" charset="utf-8"></script>
         <script>
             var editor = ace.edit("editor")
@@ -57,6 +90,12 @@
             editor.setShowPrintMargin(false)
             editor.setOption("scrollPastEnd", 0.5)
         </script>
+
+        <script type="text/javascript" src="index.js"></script>
+        <div id="loadscreen">
+            <div id="loadscreenBar"></div>
+        </div>
+
     </body>
 </html>
 
