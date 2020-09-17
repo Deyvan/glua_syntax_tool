@@ -332,6 +332,13 @@ let parse_table
 
 let parse_parlist = (tokenizer) => {
     let out = []
+
+    if(tokenizer.next_is("<special>") === "..."){
+        tokenizer.next()
+        out.push("<vararg>")
+        return out
+    }
+
     while(tokenizer.next_is("<word>")){
         out.push(tokenizer.next()[1])
         if(tokenizer.next_is("<special>") === ","){
@@ -697,16 +704,20 @@ let parse_stat = (tokenizer) => {
     if(data === "return"){
         tokenizer.next()
         let explist = parse_explist(tokenizer)
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<retrun>", explist]
     }else if(data === "break"){
         tokenizer.next()
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<break>"]
     }else if(data === "goto"){
         tokenizer.next()
         let name = tokenizer.next()[2]
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<goto>", name]
     }else if(data === "continue"){
         tokenizer.next()
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<continue>"]
     }
 
