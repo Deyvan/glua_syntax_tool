@@ -611,16 +611,20 @@ parse_exp = (tokenizer) => {
             if(token === "<special>"){
                 if(data === "-"){
                     out.push(["<unop>", "-"])
+                    continue
                 }else if(data === "#"){
                     out.push(["<unop>", "#"])
+                    continue
                 }else if(data === "!"){
                     out.push(["<unop>", "!"])
+                    continue
                 }else{
                     tokenizer.index = temp_index
                 }
             }else if(token === "<word>"){
                 if(data === "not"){
                     out.push(["<unop>", "!"])
+                    continue
                 }else{
                     tokenizer.index = temp_index
                 }
