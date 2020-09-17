@@ -882,6 +882,26 @@ parse_block = (tokenizer) => {
     return ["<block>", out]
 }
 
+export {
+    lua_tokenizer as tokenizer,
+    parse_number,
+    parse_string,
+    parse_word,
+    parse_whitespace,
+    parse_special,
+    parse_label,
+    parse_parlist,
+    parse_prefixexp,
+    parse_explist,
+    parse_funcname,
+    parse_var,
+    parse_table,
+    parse_simple_exp,
+    parse_exp,
+    parse_stat,
+    parse_block
+}
+
 export function parser(code){
     let tokenizer = new lua_tokenizer(code)
     return parse_block(tokenizer)[1]

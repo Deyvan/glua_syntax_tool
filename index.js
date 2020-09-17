@@ -5,12 +5,14 @@ let lua_str_utils
 let normalize_strings
 let strings_to_hex
 let remove_comments
+let rename_vars
 
 function loaded(){
 
     OnClickButton("normalize_strings", () => {normalize_strings(); editor.focus()})
     OnClickButton("strings_to_hex", () => {strings_to_hex(); editor.focus()})
     OnClickButton("remove_comments", () => {remove_comments(); editor.focus()})
+    OnClickButton("rename_vars", () => {rename_vars(); editor.focus()})
 
     // зуминг редактора
     if(localStorage.getItem("fontSize") === null){
@@ -70,12 +72,6 @@ function resize_editor(){
     document.getElementById("editor").style.width = window.innerWidth - 200 + "px"
 }
 
-function setvalue_and_focus(aue){
-    editor.setValue(aue)
-    editor.focus()
-    editor.scrollToLine(0)
-}
-
 /////////////////////////////////////////////// load
 
 let count_modules = 3
@@ -94,7 +90,7 @@ let loadedChanged = () => {
 document.getElementById("body").onload = () => {
     loaded_modules++
     loadedChanged()
-    import("./js/lua_parser.js").then((exports) => {lua_parser = exports.parser; loaded_modules++; loadedChanged()})
+    import("./js/lua_parser.js").then((exports) => {lua_parser = exports; loaded_modules++; loadedChanged()})
     import("./js/lua_string_utils.js").then((exports) => {lua_str_utils = exports; loaded_modules++; loadedChanged()})
 
     resize_editor()
@@ -129,9 +125,9 @@ let skip_comment = (code, offset) => {
     }
 }
 
-let parse_string=e=>{let r=e.substr(0,2);if('"'!==r[0]&&"'"!==r[0]&&("["!==r[0]||"["!==r[1]&&"="!=r[1]))return[!1,0];let s=[],a=0;if('"'===r[0]||"'"===r[0]){let r=new TextEncoder("utf8").encode(e),h=r.length,u=1;{let r=e[0],s=1,t=0;for(;s<e.length;)if("\\"!=e[s]||"\\"!=e[s+1])if("\\"!=e[s]||e[s+1]!=r){if(e[s]==r)break;s++,t++}else s+=2,t+=2;else s+=2,t+=2;a=t+2}for(;u<h;){let e=r[u];if(92==e){switch(e=r[++u]){case 97:s.push(7),u++;break;case 98:s.push(8),u++;break;case 102:s.push(12),u++;break;case 110:s.push(10),u++;break;case 114:s.push(13),u++;break;case 116:s.push(9),u++;break;case 118:s.push(11),u++;break;case 92:s.push(92),u++;break;case 34:s.push(34),u++;break;case 39:s.push(39),u++;break;case 120:u++,s.push(parseInt(String.fromCharCode(r[u])+String.fromCharCode(r[u+1]),16)),u+=2}if(48<=e&&57>=e){var t=e-48;48<=r[++u]&&57>=r[u]&&(t=10*t+(r[u]-48),u++),48<=r[u]&&57>=r[u]&&(t=10*t+(r[u]-48),u++),s.push(t)}}else{if(e==r[0]){u++;break}s.push(r[u]),u++}}}else{if("["!==r[0]||"["!==r[1]&&"="!=r[1])return[!1,0];{let r=e.length,t=1,h="",u=0;for(;"="===e[t];)t++,u++;t++;let n="]"+"=".repeat(u)+"]";for(a+=2*n.length;t<r&&e.substr(t,n.length)!==n;)h+=e[t],a++,t++;s=new TextEncoder("utf8").encode(h)}}return[s,a]};
-
 let is_spec = (char) => ("!#%&()*+,-./:;<=>?[\\]^{|}~\"\'").includes(char)
+
+///////////////////////////////////////////////
 
 normalize_strings = () => {
     let code = editor.getValue()
@@ -148,7 +144,7 @@ normalize_strings = () => {
             continue
         }
 
-        let [str, len] = parse_string(code.substr(offset))
+        let [str, len] = lua_parser.parse_string(code.substr(offset))
         offset += len
 
         if(str !== false){
@@ -169,6 +165,8 @@ normalize_strings = () => {
     editor.setValue(newcode)
 }
 
+///////////////////////////////////////////////
+
 strings_to_hex = () => {
     let code = editor.getValue()
     let newcode = ""
@@ -184,7 +182,7 @@ strings_to_hex = () => {
             continue
         }
 
-        let [str, len] = parse_string(code.substr(offset))
+        let [str, len] = lua_parser.parse_string(code.substr(offset))
         offset += len
 
         if(str !== false){
@@ -204,6 +202,8 @@ strings_to_hex = () => {
 
     editor.setValue(newcode)
 }
+
+///////////////////////////////////////////////
 
 remove_comments = () => {
     let code = editor.getValue()
@@ -225,7 +225,7 @@ remove_comments = () => {
             continue
         }
 
-        let [str, len] = parse_string(code.substr(offset))
+        let [str, len] = lua_parser.parse_string(code.substr(offset))
         if(str !== false){
             newcode += code.substr(offset, len)
             offset += len
@@ -237,4 +237,25 @@ remove_comments = () => {
     }
 
     editor.setValue(newcode)
+}
+
+///////////////////////////////////////////////
+
+
+
+
+
+
+
+rename_vars = () => {
+    let code = editor.getValue()
+    let tokenizer = new lua_parser.tokenizer(code)
+
+    let temp_index = tokenizer.index
+
+    if(lua_parser.parse_stat(tokenizer)[0] === "<local>"){
+        tokenizer.index = temp_index
+        tokenizer.next() // local
+        console.log(lua_parser.parse_parlist(tokenizer))
+    }
 }
