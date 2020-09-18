@@ -372,7 +372,13 @@ let parse_prefixexp = (tokenizer) => {
 let parse_explist = (tokenizer) => {
     let out = []
     
-    if(tokenizer.next_is("<special>") && tokenizer.next_is("<special>") !== "{" && tokenizer.next_is("<special>") !== "(") return []
+    if(
+        tokenizer.next_is("<special>") &&
+        tokenizer.next_is("<special>") !== "{" &&
+        tokenizer.next_is("<special>") !== "(" &&
+        tokenizer.next_is("<special>") !== "#" &&
+        tokenizer.next_is("<special>") !== "-" &&
+        tokenizer.next_is("<special>") !== "!") return []
 
     if(
         tokenizer.next_is("<word>") &&
@@ -382,7 +388,9 @@ let parse_explist = (tokenizer) => {
             tokenizer.next_is("<word>") == "do"
         ) || tokenizer.next_is("<eof>")
     ) return[]
+
     out.push(parse_exp(tokenizer))
+    
     while(tokenizer.next_is("<special>") === ","){
         tokenizer.next()
         out.push(parse_exp(tokenizer))
