@@ -23,21 +23,21 @@ function loaded(){
     editor.setFontSize(fontSize)
 
     document.onkeydown = (event) => {
-        if(event.ctrlKey && event.key === "="){
+        if(event.ctrlKey && event.keyCode === 61){ // keyCode = +
             fontSize = (fontSize+2.5 > 200) ? 200 : fontSize+2.5
 
             editor.setFontSize(fontSize)
             localStorage.setItem("fontSize", fontSize)
 
             return false
-        }else if(event.ctrlKey && event.key === "-"){
+        }else if(event.ctrlKey && event.keyCode === 173){ // keyCode = -
             fontSize = (fontSize-2.5 <= 0) ? 2.5 : fontSize-2.5
             
             editor.setFontSize(fontSize)
             localStorage.setItem("fontSize", fontSize)
 
             return false
-        }else if(event.ctrlKey && event.key === "s"){
+        }else if(event.ctrlKey && event.keyCode === 83){ // KeyCode = s
 
             var element = document.createElement('a');
             element.setAttribute('href', 'data:application/octet-stream;charset=utf-8,' + encodeURIComponent(editor.getValue()));
@@ -51,7 +51,7 @@ function loaded(){
             document.body.removeChild(element);
 
             return false
-        }else if(event.ctrlKey && event.key === "q"){
+        }else if(event.ctrlKey && event.keyCode === 81){ // KeyCode q
             editor.getSession().setUseWrapMode(!editor.getSession().getUseWrapMode())
 
             return false
