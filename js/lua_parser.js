@@ -252,7 +252,7 @@ function lua_tokenizer(code){
                 let char2 = this.code.substr(this.index, 2)
                 if(char2 === "/*"){
                     this.index += 2
-                    while(this.code.substr(this.index, 2) !== "*/" && this.index >= this.code.length){
+                    while(this.code.substr(this.index, 2) !== "*/" && this.index < this.code.length){
                         this.index++
                     }
                     this.index += 2
@@ -268,13 +268,12 @@ function lua_tokenizer(code){
                         this.index += suffix.length
 
                         while(this.code.substr(this.index, suffix.length) !== suffix && this.index < this.code.length){
-                            out += this.code[this.index]
-                            offset++
+                            this.index++
                         }
 
                         this.index += suffix.length
                     }else{
-                        while(this.code[this.index] !== "\n" && this.index >= this.code.length){
+                        while(this.code[this.index] !== "\n" && this.index < this.code.length){
                             this.index++
                         }
                     }
