@@ -377,7 +377,8 @@ let parse_explist = (tokenizer) => {
         tokenizer.next_is("<special>") !== "(" &&
         tokenizer.next_is("<special>") !== "#" &&
         tokenizer.next_is("<special>") !== "-" &&
-        tokenizer.next_is("<special>") !== "!") return []
+        tokenizer.next_is("<special>") !== "!" &&
+        tokenizer.next_is("<special>") !== "...") return []
 
     if(
         tokenizer.next_is("<word>") &&
