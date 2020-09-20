@@ -794,7 +794,7 @@ let parse_stat = (tokenizer) => {
         
     }else if(data === "if"){
         tokenizer.next()
-        let out = ["<if>"]
+        let out = ["<if>", start_index]
 
         let exp = parse_exp(tokenizer)
         tokenizer.next()
@@ -814,11 +814,11 @@ let parse_stat = (tokenizer) => {
                 let exp = parse_exp(tokenizer)
                 tokenizer.next()
                 let block = parse_block(tokenizer)
-                out.push(["<elseif>"], exp, block)
+                out.push(["<elseif>", exp, block])
             }
         }
 
-        return out.concat(start_index)
+        return out
     }else if(data === "do"){
         tokenizer.next()
         let block = parse_block(tokenizer)

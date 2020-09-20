@@ -1,6 +1,7 @@
 let OnClickButton
 let lua_parser
 let lua_str_utils
+let var_parser
 let var_renamer
 
 let normalize_strings
@@ -75,7 +76,7 @@ function resize_editor(){
 
 /////////////////////////////////////////////// load
 
-let count_modules = 5
+let count_modules = 6
 let loaded_modules = 0
 
 let loadedChanged = () => {
@@ -94,6 +95,7 @@ document.getElementById("body").onload = () => {
     import("./js/lua_parser.js").then((exports) => {lua_parser = exports; loaded_modules++; loadedChanged()})
     import("./js/lua_string_utils.js").then((exports) => {lua_str_utils = exports; loaded_modules++; loadedChanged()})
     import("./js/var_renamer.js").then((exports) => {var_renamer = exports.renamer; loaded_modules++; loadedChanged()})
+    import("./js/var_parser.js").then((exports) => {var_parser = exports.parse_vars; loaded_modules++; loadedChanged()})
 
     import("./js/button_funcs/rename_vars.js").then((exports) => {rename_vars = exports.main; loaded_modules++; loadedChanged()})
 
