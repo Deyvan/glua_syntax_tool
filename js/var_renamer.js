@@ -21,18 +21,12 @@ export function renamer(){ // полезная вещ кста
     }
 
     // types:
-    //      global_var
-    //      local_var
-    //      global_func
-    //      local_func
+    //      var
+    //      func
     //      arg
     //      iter
 
     this.rename = (varname, type) => {
-
-        if(type === "global_var" || type === "global_func"){
-            if(this.get_renamed(varname) === varname) return varname
-        }
 
         let newname = ""
 
@@ -74,4 +68,6 @@ export function renamer(){ // полезная вещ кста
     this.is_global = (varname) => {
         if(this.get_renamed(varname) === varname) return true
     }
+
+    this.is_local = (varname) => !this.is_global(varname)
 }

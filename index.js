@@ -105,13 +105,19 @@ document.getElementById("body").onload = () => {
 
 let is_comment = (code, offset) =>
     (code[offset] === "/" && code[offset+1] === "*") ||
-    (code[offset] === "-" && code[offset+1] === "-")
+    (code[offset] === "/" && code[offset+1] === "/") ||
+    (code[offset] === "-" && code[offset+1] === "-") 
 
 let skip_comment = (code, offset) => {
     if(code[offset] === "/" && code[offset+1] === "*"){
         offset += 2 // /*
         while(offset < code.length && !(code[offset] === "*" && code[offset+1] === "/")) offset++
         offset += 2  // */
+        return offset
+    }else if(code[offset] === "/" && code[offset+1] === "/"){
+        offset += 2 // //
+        while(offset < code.length && !(code[offset] === "\n")) offset++
+        offset++ // \n
         return offset
     }else{
         offset += 2 // --
@@ -129,7 +135,7 @@ let skip_comment = (code, offset) => {
     }
 }
 
-let is_spec = (char) => ("!#%&()*+,-./:;<=>?[\\]^{|}~\"\'").includes(char)
+let is_spec = (char) => ("!#%&()*+,-./:;<=>?[\\]^{|}~\"\'").includes(char) || char === undefined
 
 ///////////////////////////////////////////////
 

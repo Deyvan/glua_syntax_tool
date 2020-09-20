@@ -233,55 +233,7 @@ function lua_tokenizer(code){
 
     this.next = () => {
 
-        //скипануть пробелы и коменты
-
-        let removed = false
-        do{
-            removed = false
-
-            {//пробелы
-                let char = this.code[this.index]
-                while(char === "\n" || char === "\r" || char === "\t" || char === " "){
-                    this.index++
-                    char = this.code[this.index]
-                    removed = true
-                }
-            }
-
-            {//коменты
-                let char2 = this.code.substr(this.index, 2)
-                if(char2 === "/*"){
-                    this.index += 2
-                    while(this.code.substr(this.index, 2) !== "*/" && this.index < this.code.length){
-                        this.index++
-                    }
-                    this.index += 2
-                    removed = true
-                }else if(char2 === "--"){
-                    this.index += 2
-                    if(this.code.substr(this.index).match(/^\[=*\[/)){
-                        let suffix = this.code.substr(this.index)
-                            .match(/^\[=*\[/)[0]
-                            .replace("[", "]")
-                            .replace("[", "]")
-                        
-                        this.index += suffix.length
-
-                        while(this.code.substr(this.index, suffix.length) !== suffix && this.index < this.code.length){
-                            this.index++
-                        }
-
-                        this.index += suffix.length
-                    }else{
-                        while(this.code[this.index] !== "\n" && this.index < this.code.length){
-                            this.index++
-                        }
-                    }
-                    removed = true
-                }
-            }
-
-        }while(removed)
+        this.skip_white_space()
 
         if(this.index >= this.code.length) return ["<eof>"]
 
@@ -323,6 +275,62 @@ function lua_tokenizer(code){
         this.index = temp_index
 
         return [token, data]
+    }
+    
+    this.skip_white_space = () => {
+        let removed = false
+        do{
+            removed = false
+
+            {//пробелы
+                let char = this.code[this.index]
+                while(char === "\n" || char === "\r" || char === "\t" || char === " "){
+                    this.index++
+                    char = this.code[this.index]
+                    removed = true
+                }
+            }
+
+            {//коменты
+                let char2 = this.code.substr(this.index, 2)
+                if(char2 === "/*"){
+                    this.index += 2
+                    while(this.code.substr(this.index, 2) !== "*/" && this.index < this.code.length){
+                        this.index++
+                    }
+                    this.index += 2
+                    removed = true
+                }else if(char2 === "//"){
+                    this.index += 2
+                    while(this.code[this.index] !== "\n" && this.index < this.code.length){
+                        this.index++
+                    }
+                    removed = true
+                }else if(char2 === "--"){
+                    this.index += 2
+                    if(this.code.substr(this.index).match(/^\[=*\[/)){
+                        let suffix = this.code.substr(this.index)
+                            .match(/^\[=*\[/)[0]
+                            .replace("[", "]")
+                            .replace("[", "]")
+                        
+                        this.index += suffix.length
+
+                        while(this.code.substr(this.index, suffix.length) !== suffix && this.index < this.code.length){
+                            this.index++
+                        }
+
+                        this.index += suffix.length
+                    }else{
+                        while(this.code[this.index] !== "\n" && this.index < this.code.length){
+                            this.index++
+                        }
+                    }
+                    removed = true
+                }
+            }
+
+        }while(removed)
     }
 }
 
@@ -439,6 +447,7 @@ let parse_funcname = (tokenizer) => {
 let parse_var = (tokenizer) => {
     let out = []
 
+    tokenizer.skip_white_space()
     let start_index = tokenizer.index
 
     let da = tokenizer.next_is("<word>")
@@ -588,7 +597,7 @@ let parse_simple_exp = (tokenizer) => {
         tokenizer.next() // )
         let block = parse_block(tokenizer)
         tokenizer.next() // end
-        return ["<function>", args, block]
+        return ["<function>", args, block, temp_index]
     }
 
     if(token === "<special>" && data === "...") return ["<vararg>"]
@@ -612,6 +621,7 @@ parse_exp = (tokenizer) => {
     
     let out = []
 
+    tokenizer.skip_white_space()
     let start_index = tokenizer.index
 
     while(!tokenizer.next_is("<eof>")){
@@ -707,7 +717,7 @@ parse_exp = (tokenizer) => {
         }
     }
 
-    return ["<exp>", out]
+    return ["<exp>", out, start_index, tokenizer.index]
 }
 
 let parse_block
@@ -715,6 +725,8 @@ let parse_block
 let parse_stat = (tokenizer) => {
     if(tokenizer.next_is("<label>") !== false) return tokenizer.next()
 
+    tokenizer.skip_white_space()
+    let start_index = tokenizer.index
     let data = tokenizer.next_is("<word>")
 
     if(data === "return"){
@@ -757,7 +769,7 @@ let parse_stat = (tokenizer) => {
             tokenizer.next()
             let block = parse_block(tokenizer)
             tokenizer.next()
-            return ["<for in>", namelist, explist, block]
+            return ["<for in>", namelist, explist, block, start_index]
         }else{
             let name = tokenizer.next()[1]
             tokenizer.next()
@@ -777,7 +789,7 @@ let parse_stat = (tokenizer) => {
             tokenizer.next()
             let block = parse_block(tokenizer)
             tokenizer.next()
-            return ["<for>", name, exp1, exp2, exp3, block]
+            return ["<for>", name, exp1, exp2, exp3, block, start_index]
         }
         
     }else if(data === "if"){
@@ -806,13 +818,13 @@ let parse_stat = (tokenizer) => {
             }
         }
 
-        return out
+        return out.concat(start_index)
     }else if(data === "do"){
         tokenizer.next()
         let block = parse_block(tokenizer)
         tokenizer.next() //end
 
-        return ["<do>", block]
+        return ["<do>", block, start_index]
     }else if(data === "function"){
         tokenizer.next()
         let funcname = parse_funcname(tokenizer)
@@ -822,7 +834,7 @@ let parse_stat = (tokenizer) => {
         let block = parse_block(tokenizer)
         tokenizer.next() //end
 
-        return ["<function>", funcname, args, block]
+        return ["<function>", funcname, args, block, start_index]
     }else if(data === "while"){
         tokenizer.next()
         let exp = parse_exp(tokenizer)
@@ -830,14 +842,14 @@ let parse_stat = (tokenizer) => {
         let block = parse_block(tokenizer)
         tokenizer.next() //end
 
-        return ["<while>", exp, block]
+        return ["<while>", exp, block, start_index]
     }else if(data === "repeat"){
         tokenizer.next()
         let block = parse_block(tokenizer)
         tokenizer.next() //until
         let exp = parse_exp(tokenizer)
 
-        return ["<repeat>", exp, block]
+        return ["<repeat>", exp, block, start_index]
     }else if(data === "local"){
         tokenizer.next()
 
@@ -853,7 +865,7 @@ let parse_stat = (tokenizer) => {
             let block = parse_block(tokenizer)
             tokenizer.next() //end
 
-            return ["<local function>", name, args, block]
+            return ["<local function>", name, args, block, start_index]
         }
 
         let namelist = parse_parlist(tokenizer)
@@ -862,11 +874,11 @@ let parse_stat = (tokenizer) => {
             tokenizer.next()
             let explist = parse_explist(tokenizer)
             if(tokenizer.next_is("<special>") === ";") tokenizer.next()
-            return ["<local>", namelist, explist]
+            return ["<local>", namelist, explist, start_index]
         }
 
         if(tokenizer.next_is("<special>") === ";") tokenizer.next()
-        return ["<local>", namelist, []]
+        return ["<local>", namelist, [], start_index]
     }
 
     
@@ -875,7 +887,7 @@ let parse_stat = (tokenizer) => {
 
     if(var_[2]){// если var вызывает функци в конце, то это вызов функции, но не присваивание
         if(tokenizer.next_is("<special>") === ";") tokenizer.next()
-        return ["<call>", var_[1]]
+        return ["<call>", var_[1], start_index]
     } // и дальше обычное присваивание
 
     tokenizer.index = temp_index
@@ -886,11 +898,11 @@ let parse_stat = (tokenizer) => {
         tokenizer.next()
         let explist = parse_explist(tokenizer)
         if(tokenizer.next_is("<special>") === ";") tokenizer.next()
-        return ["<global>", varlist, explist]
+        return ["<global>", varlist, explist, start_index]
     }
 
     if(tokenizer.next_is("<special>") === ";") tokenizer.next()
-    return ["<global>", varlist, []]
+    return ["<global>", varlist, [], start_index]
 }
 
 parse_block = (tokenizer) => {
