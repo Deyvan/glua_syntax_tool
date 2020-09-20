@@ -1,6 +1,7 @@
 let OnClickButton
 let lua_parser
 let lua_str_utils
+let var_renamer
 
 let normalize_strings
 let strings_to_hex
@@ -74,7 +75,7 @@ function resize_editor(){
 
 /////////////////////////////////////////////// load
 
-let count_modules = 3
+let count_modules = 5
 let loaded_modules = 0
 
 let loadedChanged = () => {
@@ -92,6 +93,9 @@ document.getElementById("body").onload = () => {
     loadedChanged()
     import("./js/lua_parser.js").then((exports) => {lua_parser = exports; loaded_modules++; loadedChanged()})
     import("./js/lua_string_utils.js").then((exports) => {lua_str_utils = exports; loaded_modules++; loadedChanged()})
+    import("./js/var_renamer.js").then((exports) => {var_renamer = exports.renamer; loaded_modules++; loadedChanged()})
+
+    import("./js/button_funcs/rename_vars.js").then((exports) => {rename_vars = exports.main; loaded_modules++; loadedChanged()})
 
     resize_editor()
     document.getElementById("body").onresize = resize_editor
@@ -237,25 +241,4 @@ remove_comments = () => {
     }
 
     editor.setValue(newcode)
-}
-
-///////////////////////////////////////////////
-
-
-
-
-
-
-
-rename_vars = () => {
-    let code = editor.getValue()
-    let tokenizer = new lua_parser.tokenizer(code)
-
-    let temp_index = tokenizer.index
-
-    if(lua_parser.parse_stat(tokenizer)[0] === "<local>"){
-        tokenizer.index = temp_index
-        tokenizer.next() // local
-        console.log(lua_parser.parse_parlist(tokenizer))
-    }
 }

@@ -439,6 +439,8 @@ let parse_funcname = (tokenizer) => {
 let parse_var = (tokenizer) => {
     let out = []
 
+    let start_index = tokenizer.index
+
     let da = tokenizer.next_is("<word>")
 
     if(
@@ -513,7 +515,7 @@ let parse_var = (tokenizer) => {
     }
 
 
-    return ["<var>", out, is_call]
+    return ["<var>", out, is_call, start_index, tokenizer.index]
 }
 
 parse_table = (tokenizer) => { // оно на удивление работает
@@ -586,7 +588,7 @@ let parse_simple_exp = (tokenizer) => {
         tokenizer.next() // )
         let block = parse_block(tokenizer)
         tokenizer.next() // end
-        return ["<funciton>", args, block]
+        return ["<function>", args, block]
     }
 
     if(token === "<special>" && data === "...") return ["<vararg>"]
@@ -609,6 +611,8 @@ let parse_simple_exp = (tokenizer) => {
 parse_exp = (tokenizer) => {
     
     let out = []
+
+    let start_index = tokenizer.index
 
     while(!tokenizer.next_is("<eof>")){
 
@@ -717,7 +721,7 @@ let parse_stat = (tokenizer) => {
         tokenizer.next()
         let explist = parse_explist(tokenizer)
         if(tokenizer.next_is("<special>") === ";") tokenizer.next()
-        return ["<retrun>", explist]
+        return ["<return>", explist]
     }else if(data === "break"){
         tokenizer.next()
         if(tokenizer.next_is("<special>") === ";") tokenizer.next()
@@ -798,7 +802,7 @@ let parse_stat = (tokenizer) => {
                 let exp = parse_exp(tokenizer)
                 tokenizer.next()
                 let block = parse_block(tokenizer)
-                out.push(["elseif"], exp, block)
+                out.push(["<elseif>"], exp, block)
             }
         }
 

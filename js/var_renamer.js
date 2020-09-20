@@ -1,14 +1,16 @@
-function renamer(){ // полезная вещ кста
+export function renamer(){ // полезная вещ кста
     this.upvalues = []
 
     this.varindex_for_rename = 0
     this.varfuncindex_for_rename = 0
     this.argindex = 0
+    this.iterindex = 0
 
     this.deep = 0
 
     this.into_in_block = () => {
         this.argindex = 0
+        this.iterindex = 0
         this.upvalues.push([])
         this.deep++
     }
@@ -24,6 +26,7 @@ function renamer(){ // полезная вещ кста
     //      global_func
     //      local_func
     //      arg
+    //      iter
 
     this.rename = (varname, type) => {
 
@@ -46,6 +49,9 @@ function renamer(){ // полезная вещ кста
         }else if(type === "arg"){
             newname += "arg_" + this.argindex
             this.argindex++
+        }else if(type === "iter"){
+            newname += "iter_" + this.iterindex
+            this.iterindex++
         }
 
         let upvalues = this.upvalues[this.deep-1]
@@ -63,5 +69,9 @@ function renamer(){ // полезная вещ кста
             }
         }
         return varname
+    }
+
+    this.is_global = (varname) => {
+        if(this.get_renamed(varname) === varname) return true
     }
 }
