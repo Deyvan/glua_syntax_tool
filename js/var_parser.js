@@ -1,5 +1,6 @@
 let find_vars
 let find_vars_in_exp
+let skip_whitespace
 
 let code
 
@@ -11,7 +12,7 @@ let find_vars_in_var = (var_) => {
         if(name === "<prefix>"){
             out = out.concat(find_vars_in_exp(var_[1][index][1]))
         }else if(name === "<name>"){
-            let start = var_[3] + lua_parser.parse_whitespace(code.substr(var_[3]))[1]
+            let start = var_[3] + skip_whitespace(code.substr(var_[3]))
             let end = start + lua_parser.parse_word(code.substr(start))[1]
 
             out.push(["var", var_[1][index][1], start, end])
@@ -50,11 +51,11 @@ find_vars_in_exp = (exp) => {
         }else if(under_exp[0] === "<function>"){
             
             let offset = under_exp[3]
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 8
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 1
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
 
             let start = offset
             let [words, len] = parse_wordlist(code.substr(offset))
@@ -70,6 +71,12 @@ find_vars_in_exp = (exp) => {
     return out
 }
 
+skip_whitespace = (code) => {
+    let tokenizer = new lua_parser.tokenizer(code)
+    tokenizer.skip_white_space()
+    return tokenizer.index
+}
+
 let parse_wordlist = (code, offset_) => {
     let tokenizer = new lua_parser.tokenizer(code)
 
@@ -78,14 +85,18 @@ let parse_wordlist = (code, offset_) => {
     let offset = 0
 
     for(let index in words){
-        let word = words[index]
-        offset = code.substr(offset).indexOf(word)
+        offset += skip_whitespace(code.substr(offset))
 
+        let word = words[index]
         let len = word.length
 
         out.push([word, offset_+offset, offset_+offset+len])
 
+        offset += skip_whitespace(code.substr(offset))
         offset += len
+        offset += skip_whitespace(code.substr(offset))
+        offset += 1
+
     }
 
     return [out, tokenizer.index]
@@ -110,9 +121,9 @@ find_vars = (block) => {
             for(let index in state[2]){out = out.concat(find_vars_in_exp(state[2][index]))}
 
             let offset = state[4]
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 3 // for
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
 
             let start = offset
 
@@ -131,9 +142,9 @@ find_vars = (block) => {
             out = out.concat(find_vars_in_exp(state[4]))
 
             let offset = state[6]
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 3 // for
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
 
             let start = offset
 
@@ -147,18 +158,18 @@ find_vars = (block) => {
         }else if(state[0] === "<function>"){
 
             let offset = state[4]
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 8
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
 
             let name_start = offset
             let [name, len] = parse_funcname(code.substr(offset))
             name = name[0][1]
 
             offset += len
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 1
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
 
             let start = offset
             let [words, len_] = parse_wordlist(code.substr(offset), offset)
@@ -178,20 +189,20 @@ find_vars = (block) => {
         }else if(state[0] === "<local function>"){
 
             let offset = state[4]
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 5
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 8
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
 
             let name_start = offset
             let [name, len] = parse_funcname(code.substr(offset))
             name = name[0][1]
 
             offset += len
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 1
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
 
             let start = offset
             let [words, len_] = parse_wordlist(code.substr(offset), offset)
@@ -216,9 +227,9 @@ find_vars = (block) => {
             }
         }else if(state[0] === "<local>"){
             let offset = state[3]
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             offset += 5
-            offset += lua_parser.parse_whitespace(code.substr(offset))[1]
+            offset += skip_whitespace(code.substr(offset))
             let start = offset
             let [words, len] = parse_wordlist(code.substr(offset), offset)
             offset += len
