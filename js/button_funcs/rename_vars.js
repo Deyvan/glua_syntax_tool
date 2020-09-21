@@ -30,6 +30,12 @@ export function main(){
         }else if(name[0] === "<arg>"){
             for(let index_ in vars[index][1]){
                 let [name, start, end] = vars[index][1][index_]
+
+                if(name === "<vararg>"){
+                    name = "..."
+                    end = start + 3
+                }
+
                 newcode += code.substring(offset, start)
                 newcode += renamer.rename(name, "arg")
                 offset = end

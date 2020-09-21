@@ -30,6 +30,8 @@ export function renamer(){ // полезная вещ кста
 
         let newname = ""
 
+        if(varname === "...") return "..."
+
         if(type.substr(-3, 3) === "var"){
 
             newname += "var_" + this.varindex_for_rename
