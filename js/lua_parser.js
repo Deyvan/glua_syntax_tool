@@ -586,6 +586,7 @@ parse_table = (tokenizer) => { // оно на удивление работае�
 let parse_simple_exp = (tokenizer) => {
     
     let temp_index = tokenizer.index
+
     let [token, data] = tokenizer.next()
 
     if(token === "<word>" && data === "nil") return ["<nil>"]
@@ -789,6 +790,7 @@ let parse_stat = (tokenizer) => {
             tokenizer.next()
             let block = parse_block(tokenizer)
             tokenizer.next()
+            if(tokenizer.next_is("<special>") === ";") tokenizer.next()
             return ["<for>", name, exp1, exp2, exp3, block, start_index]
         }
         
@@ -818,12 +820,14 @@ let parse_stat = (tokenizer) => {
             }
         }
 
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return out
     }else if(data === "do"){
         tokenizer.next()
         let block = parse_block(tokenizer)
         tokenizer.next() //end
 
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<do>", block, start_index]
     }else if(data === "function"){
         tokenizer.next()
@@ -834,6 +838,7 @@ let parse_stat = (tokenizer) => {
         let block = parse_block(tokenizer)
         tokenizer.next() //end
 
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<function>", funcname, args, block, start_index]
     }else if(data === "while"){
         tokenizer.next()
@@ -842,6 +847,7 @@ let parse_stat = (tokenizer) => {
         let block = parse_block(tokenizer)
         tokenizer.next() //end
 
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<while>", exp, block, start_index]
     }else if(data === "repeat"){
         tokenizer.next()
@@ -849,6 +855,7 @@ let parse_stat = (tokenizer) => {
         tokenizer.next() //until
         let exp = parse_exp(tokenizer)
 
+        if(tokenizer.next_is("<special>") === ";") tokenizer.next()
         return ["<repeat>", exp, block, start_index]
     }else if(data === "local"){
         tokenizer.next()
@@ -865,6 +872,7 @@ let parse_stat = (tokenizer) => {
             let block = parse_block(tokenizer)
             tokenizer.next() //end
 
+            if(tokenizer.next_is("<special>") === ";") tokenizer.next()
             return ["<local function>", name, args, block, start_index]
         }
 

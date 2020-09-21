@@ -3,8 +3,6 @@ export function main(){
     let vars = var_parser(code)
     let renamer = new var_renamer()
 
-    console.log(vars)
-
     let newcode = ""
     let offset = 0
 
@@ -43,6 +41,11 @@ export function main(){
                 newcode += renamer.rename(name, "iter")
                 offset = end
             }
+        }else if(name[0] === "<iter_>"){
+            for(let index_ in vars[index][1][0]){
+                let [name, start, end] = vars[index][1][0][index_]
+                renamer.rename(name, "iter")
+            }
         }else if(name[0] === "<func>"){
             let [_, name, start, end] = vars[index]
             if(!renamer.is_local(name)){
@@ -59,5 +62,5 @@ export function main(){
     
     newcode += code.substr(offset)
 
-    console.log(newcode)
+    editor.setValue(newcode)
 }
