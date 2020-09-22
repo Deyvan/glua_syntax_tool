@@ -2,12 +2,12 @@ let OnClickButton
 let lua_parser
 let lua_str_utils
 let var_parser
-let var_renamer
 
 let normalize_strings
 let strings_to_hex
 let remove_comments
 let rename_vars
+let minifier
 
 function loaded(){
 
@@ -15,6 +15,7 @@ function loaded(){
     OnClickButton("strings_to_hex", () => {strings_to_hex(); editor.focus()})
     OnClickButton("remove_comments", () => {remove_comments(); editor.focus()})
     OnClickButton("rename_vars", () => {rename_vars(); editor.focus()})
+    OnClickButton("minify", () => {minifier(); editor.focus()})
 
     // зуминг редактора
     if(localStorage.getItem("fontSize") === null){
@@ -94,10 +95,10 @@ document.getElementById("body").onload = () => {
     loadedChanged()
     import("./js/lua_parser.js").then((exports) => {lua_parser = exports; loaded_modules++; loadedChanged()})
     import("./js/lua_string_utils.js").then((exports) => {lua_str_utils = exports; loaded_modules++; loadedChanged()})
-    import("./js/var_renamer.js").then((exports) => {var_renamer = exports.renamer; loaded_modules++; loadedChanged()})
     import("./js/var_parser.js").then((exports) => {var_parser = exports.parse_vars; loaded_modules++; loadedChanged()})
 
     import("./js/button_funcs/rename_vars.js").then((exports) => {rename_vars = exports.main; loaded_modules++; loadedChanged()})
+    import("./js/button_funcs/minifier.js").then((exports) => {minifier = exports.main; loaded_modules++; loadedChanged()})
 
     resize_editor()
     document.getElementById("body").onresize = resize_editor
