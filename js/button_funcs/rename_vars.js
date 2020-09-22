@@ -60,7 +60,7 @@ export function main(){
                 offset = end
             }else{
                 newcode += code.substring(offset, start)
-                newcode += renamer.get_renamed(name, "func")
+                newcode += renamer.get_renamed(name)
                 offset = end
             }
         }

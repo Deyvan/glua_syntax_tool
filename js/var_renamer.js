@@ -68,7 +68,13 @@ export function renamer(){ // полезная вещ кста
     }
 
     this.is_global = (varname) => {
-        if(this.get_renamed(varname) === varname) return true
+        for(var index = this.deep; index > 0; index--){
+            let upvalues = this.upvalues[index-1]
+            for(var index_ = upvalues.length; index_ > 0; index_--){
+                if(upvalues[index_-1][0] === varname) return false
+            }
+        }
+        return true
     }
 
     this.is_local = (varname) => !this.is_global(varname)
