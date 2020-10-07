@@ -204,7 +204,7 @@ export function main(){
 
             let [word, wordlen] = lua_parser.parse_word(code.substr(offset))
             if(word !== false){
-                if(!is_spec(newcode[newcode.length-1])) newcode += " "
+                if(newcode[newcode.length-1] !== undefined && !is_spec(newcode[newcode.length-1])) newcode += " "
                 newcode += word
                 offset += wordlen
                 continue
@@ -219,7 +219,7 @@ export function main(){
 
             {let [number, len] = lua_parser.parse_number(code.substr(offset))
             if(number !== false){
-                if(!is_spec(newcode[newcode.length-1])) newcode += " "
+                if(newcode[newcode.length-1] !== undefined && !is_spec(newcode[newcode.length-1])) newcode += " "
                 newcode += code.substr(offset, len)
                 offset += len
                 continue
