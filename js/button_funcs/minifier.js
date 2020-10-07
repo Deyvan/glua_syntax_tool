@@ -196,10 +196,18 @@ export function main(){
 
         while(offset < code.length){
 
+            while(is_whitespace(code[offset]) && offset < code.length){
+                offset++
+            }
+
+            if(offset >= code.length) break
+
             let [word, wordlen] = lua_parser.parse_word(code.substr(offset))
-            if(wordlen !== 0){
+            if(word !== false){
+                if(!is_spec(newcode[newcode.length-1])) newcode += " "
                 newcode += word
                 offset += wordlen
+                continue
             }
 
             {let [str, len] = lua_parser.parse_string(code.substr(offset))
@@ -211,18 +219,11 @@ export function main(){
 
             {let [number, len] = lua_parser.parse_number(code.substr(offset))
             if(number !== false){
+                if(!is_spec(newcode[newcode.length-1])) newcode += " "
                 newcode += code.substr(offset, len)
                 offset += len
                 continue
             }}
-
-            while(is_whitespace(code[offset]) && offset < code.length){
-                offset++
-            }
-
-            if(!(is_spec(newcode[newcode.length-1]) || is_spec(code[offset]))){
-                newcode += " "
-            }
 
             newcode += code[offset]
             offset++
