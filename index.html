@@ -31,6 +31,8 @@
                 bottom: 20px;
                 width: 100%;
 
+                user-select: none;
+
                 text-align: center;
                 font-size: 20px;
                 font-family: Arial;
@@ -67,6 +69,7 @@
             }
 
             .button {
+                user-select: none;
                 background-color: #303030;
                 border: none;
                 color: white;
@@ -86,6 +89,39 @@
                 background-color: #707070;
             }
 
+            #alpha_text {
+                position: absolute;
+                color: red;
+                bottom: 1px;
+                width: 100%;
+
+                user-select: none;
+
+                text-align: center;
+                font-size: 15px;
+                font-family: Arial;
+
+                animation: animate 1.5s linear infinite; 
+            }
+
+            @keyframes animate{ 
+                0%{ 
+                    opacity: 0; 
+                }
+                25%{
+                    opacity: 1;
+                }
+                50%{ 
+                    opacity: 1;
+                }
+                75%{ 
+                    opacity: 1;
+                }
+                100%{ 
+                    opacity: 0; 
+                }
+            }
+
         </style>
     </head>
     <body id="body">
@@ -97,6 +133,7 @@
             <button class="button" id="strings_to_hex">Strings to hex</button>
             <button class="button" id="normalize_strings">Normalize strings</button>
             <div id="info">Zooming:<br>ctrl + '+'<br>ctrl + '-'<br><br>Save:<br>ctrl + s<br><br>Toggle wrap:<br>ctrl + q</div>
+            <div id="alpha_text">ALPHA</div>
         </div>
         <div id="editor"></div>
 

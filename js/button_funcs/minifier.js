@@ -21,17 +21,20 @@ let number_to_valid_varname = (num) => {
 let var_renamer
 var_renamer = function(){
     this.upvalues = []
+    this.indexs = []
 
     this.varindex_for_rename = 0
     this.deep = 0
 
     this.into_in_block = () => {
         this.upvalues.push([])
+        this.indexs.push(this.varindex_for_rename)
         this.deep++
     }
 
     this.exit_from_block = () => {
-        this.upvalues.pop()
+        this.upvalues.pop([])
+        this.varindex_for_rename = this.indexs.pop()
         this.deep--
     }
 
@@ -71,6 +74,12 @@ var_renamer = function(){
 
     this.is_local = (varname) => !this.is_global(varname)
 }
+
+const spec = "!#%&()*+,-./:;<=>?[\\]^{|}~\"\'"
+const white = "\n\t\r "
+
+let is_spec = (char) => spec.includes(char)
+let is_whitespace = (char) => white.includes(char)
 
 export function main(){
     let code = editor.getValue()
@@ -146,7 +155,81 @@ export function main(){
         code = newcode
     }
 
-    
+    {//remove comments
 
-    editor.setValue(newcode)
+        let newcode = ""
+        let offset = 0
+
+        while(offset < code.length){
+
+            if(is_comment(code, offset)){
+
+                let back = is_spec(newcode[newcode.length-1])
+                    let new_offset = skip_comment(code, offset)
+                    offset = new_offset
+                let forward = is_spec(code[offset])
+
+                if(!(back || forward)){newcode += " "}
+
+                continue
+            }
+
+            let [str, len] = lua_parser.parse_string(code.substr(offset))
+            if(str !== false){
+                newcode += code.substr(offset, len)
+                offset += len
+                continue
+            }
+
+            newcode += code[offset]
+            offset++
+        }
+
+        code = newcode
+
+    }
+
+    {//remove white spaces
+
+        let newcode = ""
+        let offset = 0
+
+        while(offset < code.length){
+
+            let [word, wordlen] = lua_parser.parse_word(code.substr(offset))
+            if(wordlen !== 0){
+                newcode += word
+                offset += wordlen
+            }
+
+            {let [str, len] = lua_parser.parse_string(code.substr(offset))
+            if(str !== false){
+                newcode += code.substr(offset, len)
+                offset += len
+                continue
+            }}
+
+            {let [number, len] = lua_parser.parse_number(code.substr(offset))
+            if(number !== false){
+                newcode += code.substr(offset, len)
+                offset += len
+                continue
+            }}
+
+            while(is_whitespace(code[offset]) && offset < code.length){
+                offset++
+            }
+
+            if(!(is_spec(newcode[newcode.length-1]) || is_spec(code[offset]))){
+                newcode += " "
+            }
+
+            newcode += code[offset]
+            offset++
+        }
+
+        code = newcode
+    }
+
+    editor.setValue(code)
 }
