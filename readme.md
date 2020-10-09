@@ -1,3 +1,3 @@
-http://deyvan.github.io/glua_syntax_tool/
-
-Инструмент для упрощение деобфускации и для манипулировани кода
+# Glua syntax tool
+I don't know who needs it.
+website: http://deyvan.github.io/glua_syntax_tool/
